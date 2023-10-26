@@ -30,12 +30,6 @@
         android:layout_height="wrap_content"
         android:hint="Enter address" />
 
-    <Button
-        android:id="@+id/ButtonUpdateImage"
-        android:layout_width="118dp"
-        android:layout_height="59dp"
-        android:text="Button" />
-
     <ImageView
         android:id="@+id/UpdateImage"
         android:layout_width="wrap_content"

@@ -1,5 +1,7 @@
 package com.example.crud_pe;
 
+import static android.app.PendingIntent.getActivity;
+
 import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -31,6 +33,7 @@ public class ContactList extends ArrayAdapter<Contact> {
         LayoutInflater inflater = context.getLayoutInflater();
         View listViewItem = inflater.inflate(R.layout.layout_contact_list, null, true);
 
+
         TextView textViewName = (TextView) listViewItem.findViewById(R.id.textViewName);
         TextView textViewEmail = (TextView) listViewItem.findViewById(R.id.textViewEmail);
         TextView textViewCompany = (TextView) listViewItem.findViewById(R.id.textViewCompany);
@@ -45,7 +48,8 @@ public class ContactList extends ArrayAdapter<Contact> {
         textViewEmail.setText(contacts.getEmail());
         textViewCompany.setText(contacts.getCompany());
         textViewAddress.setText(contacts.getAddress());
-        Picasso.with(context).load(contacts.getPhoto().getImageUrl()).fit().centerCrop().into(imageView);
+
+        Picasso.with(context).load(contacts.getmImageUrl()).into(imageView);
         //imageView.set(contacts.getPhoto());
 
 

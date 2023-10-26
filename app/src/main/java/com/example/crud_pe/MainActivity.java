@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private Button ButtonUpdateImage ;
     private ImageView UpdateImage ;
     private StorageTask mUploadTask;
+    private SearchView search ;
+
 
 
 
@@ -73,12 +76,55 @@ public class MainActivity extends AppCompatActivity {
         mImageView = findViewById(R.id.image_view);
         listViewContacts = findViewById(R.id.listViewContacts);
         mUpload = (Button) findViewById(R.id.buttonAdd);
-        ButtonUpdateImage = (Button) findViewById(R.id.ButtonUpdateImage) ;
         UpdateImage = (ImageView) findViewById(R.id.UpdateImage) ;
         mStorageRef = FirebaseStorage.getInstance().getReference("contact");
 
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("contact");
+        search = (SearchView) findViewById(R.id.SearchView);
+
         contacts = new ArrayList<>() ;
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searchList(newText) ;
+                return false;
+            }
+        });
+
+        //attaching value event listener
+        mDatabaseRef.addValueEventListener(new ValueEventListener() {
+
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                //clearing the previous artist list
+                contacts.clear();
+
+                //iterating through all the nodes
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    //getting artist
+                    Contact contact = postSnapshot.getValue(Contact.class);
+                    //adding artist to the list
+                    contacts.add(contact);
+                }
+
+                //creating adapter
+                ContactList artistAdapter = new ContactList(MainActivity.this, contacts);
+                //attaching adapter to the listview
+                listViewContacts.setAdapter(artistAdapter);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         mButtonChooseImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,6 +156,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void searchList(String newText) {
+        ArrayList<Contact> searchList = new ArrayList<>();
+        for(Contact x : contacts){
+            if(x.getName().toLowerCase().contains(newText.toLowerCase())){
+                searchList.add(x) ;
+            }
+
+        }
+        ContactList contactlist = new ContactList(MainActivity.this, searchList);
+        listViewContacts.setAdapter(contactlist);
+    }
 
 
     private String getFileExtension(Uri uri) {
@@ -138,13 +195,13 @@ public class MainActivity extends AppCompatActivity {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
                             Toast.makeText(getApplicationContext(), "Upload successful", Toast.LENGTH_LONG).show();
-                            Upload upload = new Upload(taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
+                            String image = taskSnapshot.getStorage().getDownloadUrl().toString() ;
                             //getting a unique id using push().getKey() method
                             //it will create a unique id and we will use it as the Primary Key for our Artist
                             String id = mDatabaseRef.push().getKey();
 
                             //creating an Artist Object
-                            Contact contact = new Contact(id, name, email,company,address,upload);
+                            Contact contact = new Contact(id, name, email,company,address,image);
 
                             //Saving the Artist
                             mDatabaseRef.child(id).setValue(contact);
@@ -168,39 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        //attaching value event listener
-        mDatabaseRef.addValueEventListener(new ValueEventListener() {
 
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                //clearing the previous artist list
-                contacts.clear();
-
-                //iterating through all the nodes
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    //getting artist
-                    Contact contact = postSnapshot.getValue(Contact.class);
-                    //adding artist to the list
-                    contacts.add(contact);
-                }
-
-                //creating adapter
-                ContactList artistAdapter = new ContactList(MainActivity.this, contacts);
-                //attaching adapter to the listview
-                listViewContacts.setAdapter(artistAdapter);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
 
     private void showUpdateDeleteDialog(final String id, String name) {
 
@@ -244,10 +269,10 @@ public class MainActivity extends AppCompatActivity {
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
                                     Toast.makeText(getApplicationContext(), "Upload successful", Toast.LENGTH_LONG).show();
-                                    Upload upload = new Upload(taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
+
                                     //getting a unique id using push().getKey() method
                                     //it will create a unique id and we will use it as the Primary Key for our Artist
-                                    updateContact(id, name, email,company,address,upload);
+                                    updateContact(id, name, email,company,address,taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
                                     //creating an Artist Object
 
                                     //Saving the Artist
@@ -285,22 +310,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private boolean updateContact(String id, String name, String email,String company,String address,Upload photo) {
+    private boolean updateContact(String id, String name, String email,String company,String address,String image) {
         //getting the specified artist reference
         DatabaseReference dR = FirebaseDatabase.getInstance().getReference("contact").child(id);
 
         //updating artist
-        Contact contact = new Contact(id, name, email,company,address,photo);
+        Contact contact = new Contact(id, name, email,company,address,image);
         dR.setValue(contact);
         Toast.makeText(getApplicationContext(), "Contact Updated", Toast.LENGTH_LONG).show();
         return true;
     }
 
+    //LINH
     private boolean deleteContact(String id) {
-        //getting the specified artist reference
+        //lay database theo id
         DatabaseReference dR = FirebaseDatabase.getInstance().getReference("contact").child(id);
 
-        //removing artist
+        //xoa phan tu trong database
         dR.removeValue();
 
 
